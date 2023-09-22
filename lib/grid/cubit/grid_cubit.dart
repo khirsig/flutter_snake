@@ -2,9 +2,10 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:snake/grid/models/models.dart';
-import 'package:snake/ticker.dart';
+import 'package:snake/ticker/ticker.dart';
 
 class GridState {
   final GridList gridList;
@@ -20,6 +21,7 @@ class GridCubit extends Cubit<GridState> {
   late Position foodPosition;
   bool _hasChangedDirectionThisTick = false;
   bool _paused = true;
+  bool _gameOver = false;
 
   final int width;
   final int height;
@@ -47,7 +49,27 @@ class GridCubit extends Cubit<GridState> {
     _tickerSubscription?.pause();
   }
 
-  void changePlayerDirection({required bool leftDirection}) {
+  void reset() {
+    _paused = true;
+    _gameOver = false;
+    playerPosition.clear();
+    playerPosition.add(Position(width ~/ 2, height ~/ 2));
+    _updateFoodPosition();
+    updateGrid();
+    emit(GridState(_gridList));
+  }
+
+  void moveHandler(LogicalKeyboardKey key) {
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      _changePlayerDirection(leftDirection: true);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      _changePlayerDirection(leftDirection: false);
+    } else if (key == LogicalKeyboardKey.space) {
+      _pause();
+    }
+  }
+
+  void _changePlayerDirection({required bool leftDirection}) {
     if (_hasChangedDirectionThisTick == true) {
       return;
     }
@@ -67,7 +89,12 @@ class GridCubit extends Cubit<GridState> {
     _hasChangedDirectionThisTick = true;
   }
 
-  void pause() {
+  void _pause() {
+    if (_gameOver == true) {
+      reset();
+      return;
+    }
+
     if (_paused == false) {
       _paused = true;
       _tickerSubscription?.pause();
@@ -119,6 +146,18 @@ class GridCubit extends Cubit<GridState> {
         playerPosition[i] = tempPosition;
       }
     }
+
+    Map<dynamic, dynamic> map = {};
+
+    playerPosition.forEach((pos) {
+      if (!map.containsKey(pos)) {
+        map[pos] = 1;
+      } else {
+        _gameOver = true;
+        _tickerSubscription?.pause();
+      }
+    });
+
     bool ateFood = false;
     while (playerPosition.contains(foodPosition)) {
       _updateFoodPosition();

@@ -11,6 +11,9 @@ class Position {
     return other is Position && other.x == x && other.y == y;
   }
 
+  @override
+  int get hashCode => x ^ y;
+
   Position operator +(Position other) {
     return Position(x + other.x, y + other.y);
   }

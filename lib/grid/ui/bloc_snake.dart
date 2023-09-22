@@ -1,51 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:snake/gameplay/cubit/action_cubit.dart';
 import 'package:snake/grid/models/grid.dart';
 import 'package:snake/grid/cubit/grid_cubit.dart';
 
 class BlocSnake extends StatelessWidget {
   BlocSnake({super.key});
 
-  final FocusNode activeFocus = FocusNode(
-    onKeyEvent: (node, event) {
-      if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.arrowLeft &&
-          node.hasFocus) {
-        BlocProvider.of<GridCubit>(node.context!)
-            .changePlayerDirection(leftDirection: true);
-        return KeyEventResult.handled;
-      } else if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.arrowRight &&
-          node.hasFocus) {
-        BlocProvider.of<GridCubit>(node.context!)
-            .changePlayerDirection(leftDirection: false);
-        return KeyEventResult.handled;
-      } else if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.space &&
-          node.hasFocus) {
-        BlocProvider.of<GridCubit>(node.context!).pause();
-      }
-      return KeyEventResult.ignored;
-    },
-  );
+  late final FocusNode focusNode;
+
+  void _keyActionListener(BuildContext context, ActionState state) {
+    if (state is ActionKeyBoardState) {
+      BlocProvider.of<GridCubit>(context).moveHandler(state.key);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: BlocProvider(
-      create: (context) => GridCubit(
-        width: 20,
-        height: 15,
-      ),
-      child: BlocBuilder<GridCubit, GridState>(
+        body: MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ActionCubit(),
+        ),
+        BlocProvider(
+          create: (context) => GridCubit(
+            width: 20,
+            height: 15,
+          ),
+        ),
+      ],
+      child: BlocConsumer<ActionCubit, ActionState>(
         builder: (context, state) {
+          if (state is ActionFocusNodeState) {
+            focusNode = state.focusNode;
+          }
           return Focus(
             autofocus: true,
-            focusNode: activeFocus,
-            child: Grid(state.gridList),
+            focusNode: focusNode,
+            child: BlocBuilder<GridCubit, GridState>(
+              builder: (context, state) {
+                return Grid(state.gridList);
+              },
+            ),
           );
         },
+        listener: _keyActionListener,
       ),
     ));
   }
