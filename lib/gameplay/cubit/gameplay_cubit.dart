@@ -13,7 +13,7 @@ class GridState {
   GridState(this.gridList);
 }
 
-class GridCubit extends Cubit<GridState> {
+class GameplayCubit extends Cubit<GridState> {
   final GridList _gridList = [];
   StreamSubscription<int>? _tickerSubscription;
   List<Position> playerPosition = [];
@@ -27,7 +27,7 @@ class GridCubit extends Cubit<GridState> {
   final int height;
   Ticker ticker = const Ticker();
 
-  GridCubit({
+  GameplayCubit({
     required this.width,
     required this.height,
   }) : super(GridState(GridList.empty())) {

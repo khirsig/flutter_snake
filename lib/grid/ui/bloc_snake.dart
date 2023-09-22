@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:snake/gameplay/cubit/action_cubit.dart';
 import 'package:snake/grid/models/grid.dart';
-import 'package:snake/grid/cubit/grid_cubit.dart';
+import 'package:snake/gameplay/cubit/gameplay_cubit.dart';
 
 class BlocSnake extends StatelessWidget {
   BlocSnake({super.key});
@@ -11,7 +11,7 @@ class BlocSnake extends StatelessWidget {
 
   void _keyActionListener(BuildContext context, ActionState state) {
     if (state is ActionKeyBoardState) {
-      BlocProvider.of<GridCubit>(context).moveHandler(state.key);
+      BlocProvider.of<GameplayCubit>(context).moveHandler(state.key);
     }
   }
 
@@ -24,7 +24,7 @@ class BlocSnake extends StatelessWidget {
           create: (context) => ActionCubit(),
         ),
         BlocProvider(
-          create: (context) => GridCubit(
+          create: (context) => GameplayCubit(
             width: 20,
             height: 15,
           ),
@@ -38,7 +38,7 @@ class BlocSnake extends StatelessWidget {
           return Focus(
             autofocus: true,
             focusNode: focusNode,
-            child: BlocBuilder<GridCubit, GridState>(
+            child: BlocBuilder<GameplayCubit, GridState>(
               builder: (context, state) {
                 return Grid(state.gridList);
               },
