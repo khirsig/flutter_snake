@@ -1,62 +1,54 @@
 // import 'package:flutter/material.dart';
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:snake/grid/models/models.dart';
-import 'package:snake/ticker/ticker.dart';
 
-class GridState {
+class GameplayState {}
+
+class GameplayGridState extends GameplayState {
   final GridList gridList;
 
-  GridState(this.gridList);
+  GameplayGridState(this.gridList);
 }
 
-class GameplayCubit extends Cubit<GridState> {
+class GameplayPauseState extends GameplayState {}
+
+class GameplayCubit extends Cubit<GameplayState> {
   final GridList _gridList = [];
-  StreamSubscription<int>? _tickerSubscription;
   List<Position> playerPosition = [];
   Position playerDirection = const Position(1, 0);
   late Position foodPosition;
   bool _hasChangedDirectionThisTick = false;
-  bool _paused = true;
   bool _gameOver = false;
 
   final int width;
   final int height;
-  Ticker ticker = const Ticker();
 
   GameplayCubit({
     required this.width,
     required this.height,
-  }) : super(GridState(GridList.empty())) {
+  }) : super(GameplayState()) {
     playerPosition.add(Position(width ~/ 2, height ~/ 2));
     _updateFoodPosition();
     updateGrid();
-    emit(GridState(_gridList));
-    start();
-  }
-
-  void start() {
-    _tickerSubscription?.cancel();
-    _tickerSubscription =
-        ticker.tick(tickSpeed: const Duration(milliseconds: 250)).listen((_) {
-      updateGrid();
-      emit(GridState(_gridList));
-      _hasChangedDirectionThisTick = false;
-    });
-    _tickerSubscription?.pause();
+    emit(GameplayGridState(_gridList));
   }
 
   void reset() {
-    _paused = true;
     _gameOver = false;
     playerPosition.clear();
     playerPosition.add(Position(width ~/ 2, height ~/ 2));
     _updateFoodPosition();
     updateGrid();
-    emit(GridState(_gridList));
+    emit(GameplayGridState(_gridList));
+  }
+
+  void tickAction() {
+    updateGrid();
+    emit(GameplayGridState(_gridList));
+    _hasChangedDirectionThisTick = false;
   }
 
   void moveHandler(LogicalKeyboardKey key) {
@@ -95,13 +87,7 @@ class GameplayCubit extends Cubit<GridState> {
       return;
     }
 
-    if (_paused == false) {
-      _paused = true;
-      _tickerSubscription?.pause();
-    } else {
-      _paused = false;
-      _tickerSubscription?.resume();
-    }
+    emit(GameplayPauseState());
   }
 
   void updateGrid() {
@@ -154,7 +140,8 @@ class GameplayCubit extends Cubit<GridState> {
         map[pos] = 1;
       } else {
         _gameOver = true;
-        _tickerSubscription?.pause();
+        // _tickerSubscription?.pause();
+        emit(GameplayPauseState());
       }
     });
 

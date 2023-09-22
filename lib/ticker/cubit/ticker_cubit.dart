@@ -1,15 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:snake/ticker/ticker.dart';
 
-abstract class TimerState {}
+abstract class TickState {}
 
-class PauseState extends TimerState {}
+class PauseState extends TickState {}
 
-class TimerTickState extends TimerState {}
+class TickerTickState extends TickState {}
 
-class TimerCubit extends Cubit<TimerState> {
-  TimerCubit() : super(PauseState());
+class TickerCubit extends Cubit<TickState> {
+  Ticker ticker = const Ticker();
+  StreamSubscription<int>? _tickerSubscription;
+
+  TickerCubit() : super(PauseState()) {
+    _tickerSubscription?.cancel();
+    _tickerSubscription =
+        ticker.tick(tickSpeed: const Duration(milliseconds: 250)).listen((_) {
+      emit(TickerTickState());
+    });
+    _tickerSubscription?.pause();
+  }
 
   void pause() {
-    emit(PauseState());
+    if (_tickerSubscription!.isPaused) {
+      _tickerSubscription?.resume();
+    } else {
+      _tickerSubscription?.pause();
+      emit(PauseState());
+    }
   }
 }
